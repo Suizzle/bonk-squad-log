@@ -15,7 +15,7 @@ describe("bonk-squad-log", () => {
     .BonkSquadLog as anchor.Program<BonkSquadLog>
 
   const test_player = {
-    name: "Just a test player",
+    name: "Test player 2",
     squad: "The Thunderbirds",
     score: 5,
   }
@@ -34,11 +34,10 @@ describe("bonk-squad-log", () => {
     const tx = await program.methods
     .addPlayer(test_player.name, test_player.squad, new anchor.BN(test_player.score))
     .accounts({
-        player,
-        initializer: initializer.publicKey,
-        systemProgram: SystemProgram.programId,
-      }
-    )
+      player,
+      initializer: initializer.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
     .signers([ initializer ])
     .rpc()
 
@@ -49,14 +48,20 @@ describe("bonk-squad-log", () => {
     expect(account.key === provider.wallet.publicKey)
   })
 
-  xit("Player is updated`", async () => {
+  it("Player is updated`", async () => {
     // test goes here
     const newSquad = "new";
     const newScore = 4;
 
     const tx = await program.methods
-      .updatePlayer(test_player.name, newSquad)
-      .rpc()
+    .updatePlayer(test_player.name, newSquad)
+    .accounts({
+      player,
+      initializer: initializer.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([ initializer ])
+    .rpc()
 
     const account = await program.account.playerAccountState.fetch(playerPda)
     expect(test_player.name === account.name)
@@ -65,9 +70,15 @@ describe("bonk-squad-log", () => {
     expect(account.key === provider.wallet.publicKey)
   })
 
-  xit("Deletes a player", async () => {
+  it("Deletes a player", async () => {
     const tx = await program.methods
     .deletePlayer(test_player.name)
+    .accounts({
+      player,
+      initializer: initializer.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([ initializer ])
     .rpc()
   })
 })

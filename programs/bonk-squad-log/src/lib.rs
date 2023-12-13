@@ -54,7 +54,7 @@ pub struct AddPlayer<'info> {
         seeds = [name.as_bytes(), initializer.key().as_ref()],
         bump,
         payer = initializer,
-        space = 8 + 32 + 1 + 4 + name.len() + 4 + squad.len()
+        space = 8 + 32 + 4 + name.len() + 4 + squad.len() + 8
     )]
     pub player: Account<'info, PlayerAccountState>,
     #[account(mut)]
