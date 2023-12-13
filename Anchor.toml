@@ -4,7 +4,7 @@
 seeds = false
 skip-lint = false
 
-[programs.localnet]
+[programs.devnet]
 bonk_squad_log = "APozxuLZW4crR9nTPzQJEUpWMLubeC3bBUWs7ewCwtPE"
 
 [registry]

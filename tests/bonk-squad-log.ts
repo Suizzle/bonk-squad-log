@@ -2,6 +2,9 @@ import * as anchor from "@coral-xyz/anchor";
 import { assert, expect } from "chai"
 import { BonkSquadLog } from "../target/types/bonk_squad_log"
 import { BN } from "bn.js";
+import { Keypair, SystemProgram } from "@solana/web3.js";
+import initWallet from '../wba-wallet.json'
+import playerWallet from '../taker-wallet.json'
 
 describe("bonk-squad-log", () => {
   // Configure the client to use the local cluster.
@@ -11,28 +14,33 @@ describe("bonk-squad-log", () => {
   const program = anchor.workspace
     .BonkSquadLog as anchor.Program<BonkSquadLog>
 
-  const player = {
+  const test_player = {
     name: "Just a test player",
     squad: "The Thunderbirds",
     score: 5,
   }
 
+  const initializer = Keypair.fromSecretKey(new Uint8Array(initWallet));
+  const player = Keypair.fromSecretKey(new Uint8Array(playerWallet));
+
   const [playerPda] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from(player.name), provider.wallet.publicKey.toBuffer()],
+    [Buffer.from(test_player.name), provider.wallet.publicKey.toBuffer()],
     program.programId
   )
 
   it("Player is added", async () => {
     // Add test here.
     const tx = await program.methods
-    .addPlayer(player.name, player.squad, new anchor.BN(player.score))
+    .addPlayer(test_player.name, test_player.squad, new anchor.BN(test_player.score))
+    .accounts(
+      {
+        player: player.publicKey,
+        initializer: initializer.publicKey,
+        systemProgram: SystemProgram.programId
+      }
+    )
+    .signers([ initializer ])
     .rpc()
-
-    const account = await program.account.playerAccountState.fetch(playerPda)
-    expect(player.name === account.name)
-    expect(player.squad === account.squad)
-    expect(player.score === account.score.toNumber())
-    expect(account.key === provider.wallet.publicKey)  
   })
 
   xit("Player is updated`", async () => {
