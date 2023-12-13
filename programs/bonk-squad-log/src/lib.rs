@@ -69,7 +69,7 @@ pub struct UpdatePlayer<'info> {
         mut,
         seeds = [name.as_bytes(), initializer.key().as_ref()],
         bump,
-        realloc = 8 + 32 + 1 + 4 + name.len() + 4 + squad.len(),
+        realloc = 8 + 32 + 4 + name.len() + 4 + squad.len() + 8,
         realloc::payer = initializer,
         realloc::zero = true,
     )]
@@ -94,6 +94,7 @@ pub struct DeletePlayer<'info> {
     pub system_program: Program<'info, System>
 }
 #[account]
+
 pub struct PlayerAccountState {
     pub key: Pubkey,
     pub name: String,

@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { assert, expect } from "chai"
 import { BonkSquadLog } from "../target/types/bonk_squad_log"
 import { BN } from "bn.js";
-import { Keypair, SystemProgram } from "@solana/web3.js";
+import { Keypair, SystemProgram, PublicKey } from "@solana/web3.js";
 import initWallet from '../wba-wallet.json'
 import playerWallet from '../taker-wallet.json'
 
@@ -21,10 +21,11 @@ describe("bonk-squad-log", () => {
   }
 
   const initializer = Keypair.fromSecretKey(new Uint8Array(initWallet));
-  const player = Keypair.fromSecretKey(new Uint8Array(playerWallet));
+  //const player = Keypair.fromSecretKey(new Uint8Array(playerWallet));
+  const player = PublicKey.findProgramAddressSync([Buffer.from(test_player.name), initializer.publicKey.toBuffer()], program.programId)[0];
 
   const [playerPda] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from(test_player.name), provider.wallet.publicKey.toBuffer()],
+    [Buffer.from(test_player.name), initializer.publicKey.toBuffer()],
     program.programId
   )
 
@@ -32,15 +33,20 @@ describe("bonk-squad-log", () => {
     // Add test here.
     const tx = await program.methods
     .addPlayer(test_player.name, test_player.squad, new anchor.BN(test_player.score))
-    .accounts(
-      {
-        player: player.publicKey,
+    .accounts({
+        player,
         initializer: initializer.publicKey,
-        systemProgram: SystemProgram.programId
+        systemProgram: SystemProgram.programId,
       }
     )
     .signers([ initializer ])
     .rpc()
+
+    const account = await program.account.playerAccountState.fetch(playerPda)
+    expect(test_player.name === account.name)
+    expect(test_player.squad === account.squad)
+    expect(test_player.score === account.score.toNumber())
+    expect(account.key === provider.wallet.publicKey)
   })
 
   xit("Player is updated`", async () => {
@@ -49,11 +55,11 @@ describe("bonk-squad-log", () => {
     const newScore = 4;
 
     const tx = await program.methods
-      .updatePlayer(player.name, newSquad)
+      .updatePlayer(test_player.name, newSquad)
       .rpc()
 
     const account = await program.account.playerAccountState.fetch(playerPda)
-    expect(player.name === account.name)
+    expect(test_player.name === account.name)
     expect(newSquad === account.squad)
     expect(newScore === account.score.toNumber())
     expect(account.key === provider.wallet.publicKey)
@@ -61,7 +67,7 @@ describe("bonk-squad-log", () => {
 
   xit("Deletes a player", async () => {
     const tx = await program.methods
-    .deletePlayer(player.name)
+    .deletePlayer(test_player.name)
     .rpc()
   })
 })
