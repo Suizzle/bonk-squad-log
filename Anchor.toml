@@ -11,7 +11,7 @@ bonk_squad_log = "APozxuLZW4crR9nTPzQJEUpWMLubeC3bBUWs7ewCwtPE"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "/home/lyte/.config/solana/id.json"
 
 [scripts]
