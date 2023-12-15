@@ -33,7 +33,7 @@ pub mod bonk_squad_log {
         msg!("Player Account Updated");
         msg!("Name: {}", name);
         msg!("Squad: {}", squad);
-
+        //TODO: Check that initializer.key === player.key
         let player = &mut ctx.accounts.player;
         player.squad = squad;
         Ok(())
@@ -43,6 +43,51 @@ pub mod bonk_squad_log {
         msg!("Player account for {} deleted", name);
         Ok(())
     }
+
+    pub fn add_squad(
+        ctx: Context<AddSquad>,
+        name: String,
+        logo: String,
+        motto: String,
+        players: Vec<Player>
+    ) -> Result<()> {
+        msg!("Squad Account Created");
+        msg!("Name: {}", name);
+        msg!("Logo: {}", logo);
+        msg!("Motto: {}", motto);
+        msg!("Players: {}", players);
+
+        let squad = &mut ctx.accounts.squad;
+        squad.creator_key = ctx.accounts.creator.key();
+        squad.name = name;
+        squad.logo = logo;
+        squad.motto = motto;
+        squad.players = players;
+        Ok(())
+    }
+
+    pub fn update_squad(
+        ctx: Context<UpdateSquad>,
+        players: Vec<Player>
+    ) -> Result<()> {
+        msg!("Squad Account Updated");
+        msg!("Players: {}", players);
+        //TODO: Check that initializer.key === player.key
+        let squad = &mut ctx.accounts.squad;
+        squad.players = players;
+        Ok(())
+    }
+
+    pub fn delete_squad(
+        _ctx: Context<DeleteSquad>, 
+        name: String
+    ) -> Result<()> {
+        msg!("Squad account for {} deleted", name);
+        Ok(())
+    }
+
+
+
 
 }
 
@@ -56,7 +101,7 @@ pub struct AddPlayer<'info> {
         payer = initializer,
         space = 8 + 32 + 4 + name.len() + 4 + squad.len() + 8
     )]
-    pub player: Account<'info, PlayerAccountState>,
+    pub player: Account<'info, Player>,
     #[account(mut)]
     pub initializer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -73,7 +118,7 @@ pub struct UpdatePlayer<'info> {
         realloc::payer = initializer,
         realloc::zero = true,
     )]
-    pub player: Account<'info, PlayerAccountState>,
+    pub player: Account<'info, Player>,
     #[account(mut)]
     pub initializer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -88,16 +133,81 @@ pub struct DeletePlayer<'info> {
         bump,
         close=initializer
     )]
-    pub player: Account<'info, PlayerAccountState>,
+    pub player: Account<'info, Player>,
     #[account(mut)]
     pub initializer: Signer<'info>,
     pub system_program: Program<'info, System>
 }
-#[account]
 
-pub struct PlayerAccountState {
+#[derive(Accounts)]
+#[instruction(name:String, logo:String, motto:String)]
+pub struct AddSquad<'info> {
+    #[account(
+        init,
+        seeds = [name.as_bytes(), initializer.key().as_ref()],
+        bump,
+        payer = initializer,
+        // For space, let's say we're supporting up to 100 players per squad with max length of 15 characters each for player name length and squad name length 
+        space = 8 + 32 + 4 + name.len() + 4 + logo.len() + 4 + motto.len() + 4 + 100 * (8 + 32 + 4 + 15 + 4 + 15 + 8)
+    )]
+    pub squad: Account<'info, Squad>,
+    #[account(mut)]
+    pub initializer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(name:String, logo:String, motto:String)]
+pub struct UpdateSquad<'info> {
+    #[account(
+        mut,
+        seeds = [name.as_bytes(), initializer.key().as_ref()],
+        bump,
+        realloc = 8 + 32 + 4 + name.len() + 4 + logo.len() + 4 + motto.len() + 4 + 100 * (8 + 32 + 4 + 15 + 4 + 15 + 8),
+        realloc::payer = initializer,
+        realloc::zero = true,
+    )]
+    pub squad: Account<'info, Squad>,
+    #[account(mut)]
+    pub initializer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(name: String)]
+pub struct DeleteSquad<'info> {
+    #[account(
+        mut,
+        seeds=[name.as_bytes(), initializer.key().as_ref()],
+        bump,
+        close=initializer
+    )]
+    pub player: Account<'info, Player>,
+    #[account(mut)]
+    pub initializer: Signer<'info>,
+    pub system_program: Program<'info, System>
+}
+
+
+#[account]
+pub struct Player {
     pub key: Pubkey,
     pub name: String,
     pub squad: String,
     pub score: u64
+}
+
+#[account]
+pub struct Squad {
+    pub creator_key: Pubkey,
+    pub name: String, 
+    pub logo: String, //URI of logo 
+    pub motto: String, //max chars 30
+    pub players: Vec<Player>
+}
+
+#[account]
+pub struct SquadList {
+    pub creator: Pubkey,
+    pub squads: Vec<Squad>
 }

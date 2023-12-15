@@ -48,7 +48,7 @@ describe("bonk-squad-log", () => {
     expect(account.key === provider.wallet.publicKey)
   })
 
-  it("Player is updated`", async () => {
+  it("Player is updated", async () => {
     // test goes here
     const newSquad = "new";
     const newScore = 4;
@@ -70,7 +70,7 @@ describe("bonk-squad-log", () => {
     expect(account.key === provider.wallet.publicKey)
   })
 
-  it("Deletes a player", async () => {
+  it("Delete player", async () => {
     const tx = await program.methods
     .deletePlayer(test_player.name)
     .accounts({
